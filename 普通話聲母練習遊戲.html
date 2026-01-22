@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>普通話聲母練習</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(180deg, #87CEEB 0%, #90EE90 70%, #228B22 85%, #0B6623 100%);
+            border: 8px solid #8B4513;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        /* 標題 */
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            font-weight: bold;
+            color: #FF1493;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            transition: all 0.8s ease;
+        }
+
+        .title.game-started {
+            top: 20px;
+            right: 20px;
+            left: auto;
+            transform: none;
+            font-size: 18px;
+            opacity: 0.5;
+        }
+
+        /* 顯示屏 */
+        .display-screen {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 80px;
+            background: #FFD700;
+            border: 5px solid #FF6347;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .display-screen.show-initial {
+            animation: displayPulse 0.5s ease;
+        }
+
+        @keyframes displayPulse {
+            0% { transform: translateX(-50%) scale(0.9); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* 寶箱區域 */
+        .chests-container {
+            position: absolute;
+            top: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            height: 200px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 60px;
+        }
+
+        .chest {
+            width: 120px;
+            height: 120px;
+            background: #8B4513;
+            border: 5px solid #654321;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: #FFF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .chest::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 20px;
+            background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 3px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .chest:hover {
+            transform: scale(1.1);
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .chest.correct {
+            animation: correctChest 0.6s ease;
+            background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+        }
+
+        .chest.incorrect {
+            animation: shake 0.4s ease;
+            background: #FF4500;
+        }
+
+        @keyframes correctChest {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.15) rotate(5deg); }
+            50% { transform: scale(1.15) rotate(-5deg); }
+            75% { transform: scale(1.15) rotate(5deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .chest-text {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 小人 */
+        .player {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 80px;
+            background: linear-gradient(90deg, #FF0000 0%, #FF1493 50%, #FF0000 100%);
+            border-radius: 15px 15px 10px 10px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            transition: all 0.1s linear;
+            z-index: 10;
+        }
+
+        .player::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            width: 30px;
+            height: 30px;
+            background: #FFD700;
+            border-radius: 50%;
+            border: 2px solid #000;
+        }
+
+        .player::after {
+            content: '';
+            position: absolute;
+            top: 45px;
+            width: 40px;
+            height: 30px;
+            background: #0000FF;
+            border-radius: 5px;
+        }
+
+        .player.jump {
+            animation: jump 0.6s ease;
+        }
+
+        @keyframes jump {
+            0%, 100% { bottom: 80px; }
+            50% { bottom: 250px; }
+        }
+
+        /* 生命值 */
+        .lives-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+
+        .heart {
+            width: 30px;
+            height: 30px;
+            background: #FF0000;
+            clip-path: polygon(
+                50% 100%, 61% 90%, 100% 45%, 100% 35%, 61% 0%, 50% 15%, 39% 0%, 0% 35%, 0% 45%, 39% 90%
+            );
+            transition: all 0.3s ease;
+        }
+
+        .heart.lost {
+            background: #CCCCCC;
+            transform: scale(0.8);
+        }
+
+        /* 遊戲結束覆蓋層 */
+        .game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .game-over-overlay.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .game-over-text {
+            font-size: 60px;
+            font-weight: bold;
+            color: #FF1493;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.3);
+        }
+
+        .game-result {
+            font-size: 32px;
+            color: #FFD700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .restart-button {
+            padding: 15px 40px;
+            font-size: 24px;
+            background: #00FF00;
+            border: 3px solid #00AA00;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #000;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .restart-button:hover {
+            background: #00DD00;
+            transform: scale(1.05);
+        }
+
+        .restart-button:active {
+            transform: scale(0.98);
+        }
+
+        /* 完成畫面 */
+        .completion-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .completion-overlay.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .completion-text {
+            font-size: 50px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .congratulations {
+            font-size: 36px;
+            color: #00FF00;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 900px) {
+            .game-container {
+                width: 90vw;
+                height: 67.5vw;
+                max-width: 800px;
+                max-height: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="title">普通話聲母練習</div>
+        <div class="display-screen"></div>
+        <div class="chests-container">
+            <div class="chest" data-position="left"></div>
+            <div class="chest" data-position="right"></div>
+        </div>
+        <div class="player"></div>
+        <div class="lives-container">
+            <div class="heart"></div>
+            <div class="heart"></div>
+            <div class="heart"></div>
+            <div class="heart"></div>
+            <div class="heart"></div>
+        </div>
+        <div class="game-over-overlay">
+            <div class="game-over-text">遊戲結束</div>
+            <div class="game-result"></div>
+            <button class="restart-button">重新開始</button>
+        </div>
+        <div class="completion-overlay">
+            <div class="completion-text">🎉 恭喜完成！</div>
+            <div class="congratulations">你掌握了所有聲母！</div>
+            <button class="restart-button" onclick="location.reload()">重新遊戲</button>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲數據
+        const initials = [
+            { pinyin: 'b', correct: '波', incorrect: '坡' },
+            { pinyin: 'p', correct: '坡', incorrect: '博' },
+            { pinyin: 'm', correct: '摸', incorrect: '喔' },
+            { pinyin: 'f', correct: '佛', incorrect: '活' },
+            { pinyin: 'd', correct: '德', incorrect: '特' },
+            { pinyin: 't', correct: '特', incorrect: '的' },
+            { pinyin: 'n', correct: '呢', incorrect: '了' },
+            { pinyin: 'l', correct: '勒', incorrect: '内' },
+            { pinyin: 'g', correct: '哥', incorrect: '可' },
+            { pinyin: 'k', correct: '科', incorrect: '喝' },
+            { pinyin: 'h', correct: '呵', incorrect: '歌' },
+            { pinyin: 'j', correct: '機', incorrect: '資' },
+            { pinyin: 'q', correct: '七', incorrect: '吃' },
+            { pinyin: 'x', correct: '西', incorrect: '斯' },
+            { pinyin: 'zh', correct: '知', incorrect: '基' },
+            { pinyin: 'ch', correct: '吃', incorrect: '期' },
+            { pinyin: 'sh', correct: '詩', incorrect: '思' },
+            { pinyin: 'r', correct: '日', incorrect: '一' },
+            { pinyin: 'z', correct: '資', incorrect: '雞' },
+            { pinyin: 'c', correct: '刺', incorrect: '妻' },
+            { pinyin: 's', correct: '絲', incorrect: '希' }
+        ];
+
+        // 遊戲狀態
+        let gameState = {
+            currentLevel: 0,
+            lives: 5,
+            isGameRunning: false,
+            isAnimating: false,
+            startTime: null
+        };
+
+        // DOM 元素
+        const displayScreen = document.querySelector('.display-screen');
+        const chests = document.querySelectorAll('.chest');
+        const player = document.querySelector('.player');
+        const livesContainer = document.querySelector('.lives-container');
+        const gameOverOverlay = document.querySelector('.game-over-overlay');
+        const completionOverlay = document.querySelector('.completion-overlay');
+        const title = document.querySelector('.title');
+        const restartButton = document.querySelector('.restart-button');
+
+        // 音頻上下文（用於生成聲效）
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // 初始化遊戲
+        function initGame() {
+            gameState = {
+                currentLevel: 0,
+                lives: 5,
+                isGameRunning: true,
+                isAnimating: false,
+                startTime: null
+            };
+
+            gameOverOverlay.classList.remove('show');
+            completionOverlay.classList.remove('show');
+            title.classList.add('game-started');
+            player.classList.remove('jump');
+            livesContainer.querySelectorAll('.heart').forEach(heart => heart.classList.remove('lost'));
+
+            loadLevel(0);
+        }
+
+        // 加載關卡
+        function loadLevel(levelIndex) {
+            if (levelIndex >= initials.length) {
+                endGameSuccess();
+                return;
+            }
+
+            gameState.currentLevel = levelIndex;
+            const initial = initials[levelIndex];
+
+            // 更新顯示屏
+            displayScreen.textContent = initial.pinyin;
+            displayScreen.classList.add('show-initial');
+            setTimeout(() => displayScreen.classList.remove('show-initial'), 500);
+
+            // 隨機決定正確答案的位置
+            const isCorrectLeft = Math.random() > 0.5;
+            const leftChest = chests[0];
+            const rightChest = chests[1];
+
+            if (isCorrectLeft) {
+                leftChest.textContent = initial.correct;
+                rightChest.textContent = initial.incorrect;
+                leftChest.dataset.correct = 'true';
+                rightChest.dataset.correct = 'false';
+            } else {
+                leftChest.textContent = initial.incorrect;
+                rightChest.textContent = initial.correct;
+                leftChest.dataset.correct = 'false';
+                rightChest.dataset.correct = 'true';
+            }
+
+            gameState.isAnimating = false;
+        }
+
+        // 寶箱點擊處理
+        chests.forEach(chest => {
+            chest.addEventListener('click', handleChestClick);
+        });
+
+        function handleChestClick(event) {
+            if (!gameState.isGameRunning || gameState.isAnimating) return;
+
+            gameState.isAnimating = true;
+
+            const isCorrect = event.target.dataset.correct === 'true';
+            const clickedChest = event.target;
+
+            // 玩家跳躍
+            player.classList.add('jump');
+
+            if (isCorrect) {
+                // 正確
+                clickedChest.classList.add('correct');
+                playSuccessSound();
+                
+                setTimeout(() => {
+                    clickedChest.classList.remove('correct');
+                    player.classList.remove('jump');
+                    loadLevel(gameState.currentLevel + 1);
+                }, 600);
+            } else {
+                // 錯誤
+                clickedChest.classList.add('incorrect');
+                playErrorSound();
+                gameState.lives--;
+                updateLivesDisplay();
+
+                setTimeout(() => {
+                    clickedChest.classList.remove('incorrect');
+                    player.classList.remove('jump');
+
+                    if (gameState.lives <= 0) {
+                        endGameOver();
+                    } else {
+                        gameState.isAnimating = false;
+                    }
+                }, 400);
+            }
+        }
+
+        // 更新生命值顯示
+        function updateLivesDisplay() {
+            const hearts = livesContainer.querySelectorAll('.heart');
+            hearts.forEach((heart, index) => {
+                if (index >= gameState.lives) {
+                    heart.classList.add('lost');
+                } else {
+                    heart.classList.remove('lost');
+                }
+            });
+        }
+
+        // 遊戲結束 - 失敗
+        function endGameOver() {
+            gameState.isGameRunning = false;
+            gameOverOverlay.classList.add('show');
+            const resultText = gameOverOverlay.querySelector('.game-result');
+            resultText.textContent = `你完成了 ${gameState.currentLevel} 個聲母`;
+        }
+
+        // 遊戲結束 - 成功
+        function endGameSuccess() {
+            gameState.isGameRunning = false;
+            completionOverlay.classList.add('show');
+        }
+
+        // 音效函數
+        function playSuccessSound() {
+            const now = audioContext.currentTime;
+            const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+
+            notes.forEach((freq, index) => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+
+                osc.frequency.value = freq;
+                osc.type = 'sine';
+
+                gain.gain.setValueAtTime(0.3, now + index * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + index * 0.1 + 0.2);
+
+                osc.start(now + index * 0.1);
+                osc.stop(now + index * 0.1 + 0.2);
+            });
+        }
+
+        function playErrorSound() {
+            const now = audioContext.currentTime;
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+            osc.type = 'sine';
+
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+            osc.start(now);
+            osc.stop(now + 0.2);
+        }
+
+        // 重新開始按鈕
+        restartButton.addEventListener('click', initGame);
+
+        // 鍵盤控制（上鍵移動玩家）
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' && gameState.isGameRunning && !gameState.isAnimating) {
+                // 獲取玩家當前位置
+                const playerRect = player.getBoundingClientRect();
+                const containerRect = player.parentElement.getBoundingClientRect();
+                const playerCenterX = playerRect.left - containerRect.left + playerRect.width / 2;
+
+                // 檢查與寶箱的碰撞
+                chests.forEach(chest => {
+                    const chestRect = chest.getBoundingClientRect();
+                    const chestCenterX = chestRect.left - containerRect.left + chestRect.width / 2;
+                    const distance = Math.abs(playerCenterX - chestCenterX);
+
+                    if (distance < 80) {
+                        chest.click();
+                    }
+                });
+            }
+        });
+
+        // 觸屏控制（移動手指向上）
+        let touchStartY = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!gameState.isGameRunning || gameState.isAnimating) return;
+
+            const touchEndY = e.touches[0].clientY;
+            const touchX = e.touches[0].clientX;
+
+            if (touchStartY - touchEndY > 50) {
+                const containerRect = player.parentElement.getBoundingClientRect();
+                const playerRect = player.getBoundingClientRect();
+                const playerCenterX = playerRect.left - containerRect.left + playerRect.width / 2;
+
+                chests.forEach(chest => {
+                    const chestRect = chest.getBoundingClientRect();
+                    const chestCenterX = chestRect.left - containerRect.left + chestRect.width / 2;
+                    const distance = Math.abs(playerCenterX - chestCenterX);
+
+                    if (distance < 100) {
+                        chest.click();
+                    }
+                });
+
+                touchStartY = touchEndY;
+            }
+        });
+
+        // 遊戲開始
+        initGame();
+    </script>
+</body>
+</html>
